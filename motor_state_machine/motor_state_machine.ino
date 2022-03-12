@@ -65,18 +65,40 @@ void setup()
  //Nothing here
 }
 
-
 void loop()
 {
-   
+   get_current_state();
+   motor_state_machine();
 }
 
 void get_current_state(){
+   // TODO: FInd a method to allow for different motor speeds to be inputed from the serial line
    // Obtains a message from the serial line and updates the state case
+   if (serial.available()){
+      // get message from serial line
+      int msg = Serial.parseInt();
+
+      // update the state based on the message
+      if (msg == 0){
+         currentState = STOP;
+      }
+      else if (msg == 1){
+         currentState = FORWARD;
+      }
+      else if (msg == 2){
+         currentState = BACKWARD;
+      }
+      else if (msg == 3){
+         currentState = LEFT;
+      }
+      else if (msg == 4){
+         currentState = RIGHT;
+      }
+   }
 }
 
 void motor_state_machine(){
-   // Implement varying speeds into the state machines based on the joystick
+   // TODO: Implement varying speeds into the state machines based on the joystick
    // Develop a simple state machine for the robot that controls the motors
    // with the following states: FORWARD, BACKWARD, LEFT, RIGHT, STOP
    switch(currentState)
@@ -88,7 +110,23 @@ void motor_state_machine(){
 
       case FORWARD:
          // moves the robot forward
-         forward(motorLeft, motorRight, );
+         forward(motorLeft, motorRight, DEFAULT_SPD);
+         break;
+
+      case BACKWARD:
+         // moves the robot backward
+         backward(motorLeft, motorRight, DEFAULT_SPD);
+         break;
+
+      case LEFT:
+         // turns the robot left
+         left(motorLeft, motorRight, DEFAULT_SPD);
+         break;
+         
+      case RIGHT:
+         // turns the robot right
+         right(motorLeft, motorRight, DEFAULT_SPD);
+         break;
    }
 }
 
