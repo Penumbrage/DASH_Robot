@@ -76,7 +76,7 @@ void get_current_state(){
 }
 
 void motor_state_machine(){
-   // TODO: Implement varying speeds into the state machines based on the joystick
+   // Implement varying speeds into the state machines based on the joystick
    // Develop a simple state machine for the robot that controls the motors
    // with the following states: FORWARD, BACKWARD, LEFT, RIGHT, STOP
    switch(currentState)
