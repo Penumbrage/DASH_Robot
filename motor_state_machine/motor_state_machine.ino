@@ -69,7 +69,7 @@ void setup()
 
    // initialize the current message to be STOP state
    // TODO: Check if this is causing the state to reset
-   msg = 1;
+   int msg = 1;
 }
 
 
