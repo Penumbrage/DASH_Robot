@@ -23,7 +23,7 @@ Developed with ROB-9457
 #include <SparkFun_TB6612.h>
 
 // Create a bluetooth object and variables to store data read from bluetooth
-SoftwareSerial HM10(0, 1); // RX = 0, TX = 1
+SoftwareSerial HM10(20, 21); // RX = 0, TX = 1
 char bt_msg;               // stores message from bluetooth module
 String cmd = "";           // command to send to motor driver
 
