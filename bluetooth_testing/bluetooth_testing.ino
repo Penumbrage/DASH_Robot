@@ -1,37 +1,44 @@
-//#include <SoftwareSerial.h>
-//SoftwareSerial HM10(0,1); // RX = 2, TX = 3
-//char appData;  
-//String inData = "";
-//void setup()
-//{
+// /*
+// The following code is used to test the bluetooth module (obtained from an online resource)
+// */
+// // NOTE: SoftwareSerial is a library that allows us to define other pins as TX/RX pins
+// #include <SoftwareSerial.h>       
+// SoftwareSerial HM10(2, 3); // RX = 2, TX = 3
+// char appData;  
+// String inData = "";
+
+// void setup()
+// {
 //  Serial.begin(9600);
 //  Serial.println("HM10 serial started at 9600");
 //  HM10.begin(9600); // set HM10 serial at 9600 baud rate
-//}
-//
-//void loop()
-//{
-//  HM10.listen();  // listen the HM10 port
+// }
+
+// void loop()
+// {
+// //  HM10.listen();  // listen the HM10 port
 //  while (HM10.available() > 0) {   // if HM10 sends something then read
 //    appData = HM10.read();
 //    inData = String(appData);  // save the data in string format
+//    HM10.write(appData);
 //    Serial.write(appData);
 //  }
-//
-// 
+
 //  if (Serial.available()) {           // Read user input if available.
 //    delay(10);
-//    HM10.write(Serial.read());
+//    Serial.write(Serial.read());
 //  }
 //  if ( inData == "F") {
-//    Serial.println("LED OFF");
+//    HM10.println("LED OFF");
+//    Serial.println("LED OFF COMPUTER");
 //    delay(500);
 //  }
 //  if ( inData == "N") {
-//    Serial.println("LED ON");
+//    HM10.println("LED ON");
+//    Serial.println("LED ON COMPUTER");
 //    delay(500);
 //  }
-//}
+// }
 
 
 
@@ -45,7 +52,7 @@ and the Arduino
 #include <SoftwareSerial.h>
 
 // Create a bluetooth object and variables to store data read from bluetooth
-SoftwareSerial HM10(0, 1); // RX = 0, TX = 1
+SoftwareSerial HM10(2, 3); // RX = 2, TX = 3
 char bt_msg;               // stores message from bluetooth module
 String cmd = "";           // command to send to motor driver
 
@@ -63,9 +70,10 @@ motorState currentState = STOP;
 
 void setup()
 {
-  Serial.begin(9600);
-  Serial.println("HM10 serial started at 9600");
+  // Serial.begin(9600);
+  // Serial.println("HM10 serial started at 9600");
   HM10.begin(9600); // set HM10 serial at 9600 baud rate
+  HM10.println("Bluetooth connection established.");
 }
 
 void loop()
@@ -81,30 +89,27 @@ void get_msg(){
     while (HM10.available() > 0) {   // if HM10 sends something then read
         bt_msg = HM10.read();
         cmd = String(bt_msg);  // save the data in string format
-        Serial.print("The following command has been received: "); Serial.println(cmd);
-    }
-    if (Serial.available()) {           // Read user input if available.
-        delay(10);
-        HM10.write("HEY");
+        HM10.print("The following command has been received: "); HM10.println(cmd); HM10.println("");
+        delay(1000);
     }
 }
 
 // This function gets the current state information from the bluetooth module
 void set_current_state(){
    // Obtains a message from the serial line and updates the state case
-   if (cmd == "1"){
+   if (cmd == "0"){
       currentState = STOP;
    }
-   else if (cmd == "2"){
+   else if (cmd == "1"){
       currentState = FORWARD;
    }
-   else if (cmd == "3"){
+   else if (cmd == "2"){
       currentState = BACKWARD;
    }
-   else if (cmd == "4"){
+   else if (cmd == "3"){
       currentState = LEFT;
    }
-   else if (cmd == "5"){
+   else if (cmd == "4"){
       currentState = RIGHT;
    }
 }
@@ -118,29 +123,34 @@ void motor_state_machine(){
    {
       case STOP:
          // both motors off and the robot is not moving
-         HM10.write("The current state is: "); HM10.write(STOP);
+         HM10.print("The current state is: "); HM10.println("STOP");
+         delay(1000);
          break;
 
       case FORWARD:
          // moves the robot forward
-         HM10.write("The current state is: "); HM10.write(STOP);
+         HM10.print("The current state is: "); HM10.println("FORWARD");
+         delay(1000);
          break;
 
       case BACKWARD:
          // moves the robot backward
-         HM10.write("The current state is: "); HM10.write(STOP);
+         HM10.print("The current state is: "); HM10.println("BACKWARD");
+         delay(1000);
          break;
 
       case LEFT:
          // turns the robot left
          // TODO: figure out why power is decreased for this condition
-         HM10.write("The current state is: "); HM10.write(STOP);
+         HM10.print("The current state is: "); HM10.println("LEFT");
+         delay(1000);
          break;
          
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
-         HM10.write("The current state is: "); HM10.write(STOP);
+         HM10.print("The current state is: "); HM10.println("RIGHT");
+         delay(1000);
          break;
    }
 }
