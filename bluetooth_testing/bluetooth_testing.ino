@@ -52,7 +52,7 @@ and the Arduino
 #include <SoftwareSerial.h>
 
 // Create a bluetooth object and variables to store data read from bluetooth
-SoftwareSerial HM10(2, 3); // RX = 2, TX = 3
+SoftwareSerial HM10(14, 15); // RX = 14, TX = 15 (NOTE: Analog in pins cannot handle TX RX commands)
 char bt_msg;               // stores message from bluetooth module
 String cmd = "";           // command to send to motor driver
 

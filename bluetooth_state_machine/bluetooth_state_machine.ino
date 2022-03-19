@@ -23,7 +23,7 @@ Developed with ROB-9457
 #include <SparkFun_TB6612.h>
 
 // Create a bluetooth object and variables to store data read from bluetooth
-SoftwareSerial HM10(20, 21); // RX = 0, TX = 1
+SoftwareSerial HM10(14, 15); // RX = 14, TX = 15
 char bt_msg;               // stores message from bluetooth module
 String cmd = "";           // command to send to motor driver
 
@@ -40,7 +40,7 @@ String cmd = "";           // command to send to motor driver
 
 // Define the default speed of the motors by using the PWM to get to 3.3 V
 // TODO: Tune the motor speed to mimic our original testing case
-#define DEFAULT_SPD 200
+#define DEFAULT_SPD 100
 
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward.  Value can be 1 or -1
@@ -75,37 +75,45 @@ void setup()
 void loop()
 {
    get_msg();
-   get_current_state();
    motor_state_machine();
 }
 
 // This function gets a message from the bluetooth module when available
 void get_msg(){
     HM10.listen();  // listen the HM10 port
-    while (HM10.available() > 0) {   // if HM10 sends something then read
+    if (HM10.available() > 0) {   // if HM10 sends something then read
         bt_msg = HM10.read();
         cmd = String(bt_msg);  // save the data in string format
-        HM10.print("The following command has been received: "); HM10.println(cmd); HM10.println("");
+        // print confirmation message and set current state
+        HM10.print("The following command has been received: "); HM10.println(cmd); 
+        HM10.print("The current state is: ");
+        set_current_state();
+        HM10.println("");
     }
 }
 
 // This function gets the current state information from the bluetooth module
 void set_current_state(){
-   // Obtains a message from the serial line and updates the state case
+   // Obtains a message from the serial line and updates the state case / prints confirmation message to application
    if (cmd == "0"){
       currentState = STOP;
+      HM10.println("STOP");
    }
    else if (cmd == "1"){
       currentState = FORWARD;
+      HM10.println("FORWARD");
    }
    else if (cmd == "2"){
       currentState = BACKWARD;
+      HM10.println("BACKWARD");
    }
    else if (cmd == "3"){
       currentState = LEFT;
+      HM10.println("LEFT");
    }
    else if (cmd == "4"){
       currentState = RIGHT;
+      HM10.println("RIGHT");
    }
 }
 
@@ -133,13 +141,13 @@ void motor_state_machine(){
       case LEFT:
          // turns the robot left
          // TODO: figure out why power is decreased for this condition
-         left(motorLeft, motorRight, DEFAULT_SPD);
+         left(motorLeft, motorRight, 2*DEFAULT_SPD);
          break;
          
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
-         right(motorLeft, motorRight, DEFAULT_SPD);
+         right(motorLeft, motorRight, 2*DEFAULT_SPD);
          break;
    }
 }
