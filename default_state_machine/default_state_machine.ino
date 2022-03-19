@@ -21,6 +21,7 @@ Developed with ROB-9457
 // This is the library for the TB6612 that contains the class Motor and all the
 // functions
 #include <SparkFun_TB6612.h>
+#include <Wire.h>
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
 // the default pins listed are the ones used on the Redbot (ROB-12097) with
@@ -34,7 +35,8 @@ Developed with ROB-9457
 #define STBY 9
 
 // Define the default speed of the motors by using the PWM to get to 3.3 V
-#define DEFAULT_SPD 168 
+// TODO: Tune the motor speed to mimic our original testing case
+#define DEFAULT_SPD 180
 
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward.  Value can be 1 or -1
@@ -62,8 +64,14 @@ motorState currentState = STOP;
 
 void setup()
 {
- //Nothing here
+   // start the serial line
+   Serial.begin(9600);
+
+   // initialize the current message to be STOP state
+   // TODO: Check if this is causing the state to reset
+   int msg = 1;
 }
+
 
 void loop()
 {
@@ -79,21 +87,25 @@ void get_current_state(){
       int msg = Serial.parseInt();
 
       // update the state based on the message
-      if (msg == 0){
+      if (msg == 1){
          currentState = STOP;
       }
-      else if (msg == 1){
+      else if (msg == 2){
          currentState = FORWARD;
       }
-      else if (msg == 2){
+      else if (msg == 3){
          currentState = BACKWARD;
       }
-      else if (msg == 3){
+      else if (msg == 4){
          currentState = LEFT;
       }
-      else if (msg == 4){
+      else if (msg == 5){
          currentState = RIGHT;
       }
+   }
+   else{
+      // TODO: figure out if this code is necessary
+      currentState = currentState;
    }
 }
 
@@ -120,11 +132,13 @@ void motor_state_machine(){
 
       case LEFT:
          // turns the robot left
+         // TODO: figure out why power is decreased for this condition
          left(motorLeft, motorRight, DEFAULT_SPD);
          break;
          
       case RIGHT:
          // turns the robot right
+         // TODO: figure out why power is decreased for ths condition
          right(motorLeft, motorRight, DEFAULT_SPD);
          break;
    }
@@ -178,4 +192,3 @@ void example_code(){
    // brake(motor1, motor2);
    // delay(1000);
 }
-
