@@ -1,21 +1,14 @@
 /******************************************************************************
-TestRun.ino
-TB6612FNG H-Bridge Motor Driver Example code
-Michelle @ SparkFun Electronics
-8/20/16
-https://github.com/sparkfun/SparkFun_TB6612FNG_Arduino_Library
+File Name: bluetooth_state_machine.ino
+Author: William Wang
 
-Uses 2 motors to show examples of the functions in the library.  This causes
-a robot to do a little 'jig'.  Each movement has an equal and opposite movement
-so assuming your motors are balanced the bot should end up at the same place it
-started.
+Description: This is the bluetooth state machine code for the DASH robot utilizing 5
+different states (STOP, FORWARD, BACKWARD, LEFT, and RIGHT). A bluetooth module and 
+app are required for this code to work.
 
-Resources:
+Dependencies:
 TB6612 SparkFun Library
-
-Development environment specifics:
-Developed on Arduino 1.6.4
-Developed with ROB-9457
+SoftwareSerial
 ******************************************************************************/
 
 // Include the different libraries in the code
@@ -28,8 +21,6 @@ char bt_msg;               // stores message from bluetooth module
 String cmd = "";           // command to send to motor driver
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
-// the default pins listed are the ones used on the Redbot (ROB-12097) with
-// the exception of STBY which the Redbot controls with a physical switch
 #define AIN1 2
 #define BIN1 6
 #define AIN2 4
@@ -38,12 +29,13 @@ String cmd = "";           // command to send to motor driver
 #define PWMB 5
 #define STBY 9
 
-// Define the default speed of the motors by using the PWM to get to 3.3 V
+// Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
 #define DEFAULT_SPD 100
 
 // these constants are used to allow you to make your motor configuration 
-// line up with function names like forward.  Value can be 1 or -1
+// line up with function names like forward (i.e. if the motor is wired backwards
+// then you can change the offset to flip the logic via software). Value can be 1 or -1
 const int offsetA = 1;
 const int offsetB = 1;
 

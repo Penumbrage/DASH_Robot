@@ -4,8 +4,8 @@
 // // NOTE: SoftwareSerial is a library that allows us to define other pins as TX/RX pins
 // #include <SoftwareSerial.h>       
 // SoftwareSerial HM10(2, 3); // RX = 2, TX = 3
-// char appData;  
-// String inData = "";
+// char appData;              // variable that stores incoming data
+// String inData = "";        // variable that is printed to the Serial
 
 // void setup()
 // {
@@ -45,7 +45,7 @@
 
 /*
 This code serves as a test for the communication between the bluetooth module
-and the Arduino
+and the Arduino Micro
 */
 
 // Include the different libraries in the code
