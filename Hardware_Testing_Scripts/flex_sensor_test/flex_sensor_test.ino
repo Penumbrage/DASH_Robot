@@ -19,12 +19,12 @@ Arduino 1.6.7
 // Measure the voltage at 5V and the actual resistance of your
 // 10k resistor, and enter them below:
 const float VCC = 5.0; // Measured voltage of Ardunio 5V line
-const float R_DIV = 9730; // Measured resistance of 10k resistor
+const float R_DIV = 10000; // Measured resistance of 10k resistor
 
 // Upload the code, then try to adjust these values to more
 // accurately calculate bend degree.
-const float STRAIGHT_RESISTANCE = 24500.0; // resistance when straight
-const float BEND_RESISTANCE = 65000.0; // resistance at 90 deg
+const float STRAIGHT_RESISTANCE = 30406; // resistance when straight
+const float BEND_RESISTANCE = 80000; // resistance at 90 deg
 
 void setup() 
 {

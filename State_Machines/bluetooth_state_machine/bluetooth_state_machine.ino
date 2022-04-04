@@ -27,11 +27,11 @@ String cmd = "";           // command to send to motor driver
 #define BIN2 7
 #define PWMA 3
 #define PWMB 5
-#define STBY 9
+#define STBY 9  
 
 // Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
-#define DEFAULT_SPD 100
+#define DEFAULT_SPD 200
 
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward (i.e. if the motor is wired backwards
@@ -133,13 +133,13 @@ void motor_state_machine(){
       case LEFT:
          // turns the robot left
          // TODO: figure out why power is decreased for this condition
-         left(motorLeft, motorRight, 2*DEFAULT_SPD);
+         left(motorLeft, motorRight, DEFAULT_SPD);
          break;
          
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
-         right(motorLeft, motorRight, 2*DEFAULT_SPD);
+         right(motorLeft, motorRight, DEFAULT_SPD);
          break;
    }
 }
