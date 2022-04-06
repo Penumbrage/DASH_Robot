@@ -20,13 +20,16 @@ SoftwareSerial
 // Include the different libraries in the code
 #include <SoftwareSerial.h>
 #include <SparkFun_TB6612.h>
+#include <ezButton.h>
 
 // Create a bluetooth object and variables to store data read from bluetooth
 SoftwareSerial HM10(14, 15); // RX = 14, TX = 15
 char bt_msg;               // stores message from bluetooth module
 String cmd = "";           // command to send to motor driver
 
-float flex_angle;          // stores the angle from the flex sensor
+// create ezButton object that attach to pin 10
+ezButton limitSwitch(10);
+String switch_state = "";         // stores the state of the switch
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
 #define AIN1 2
@@ -41,22 +44,11 @@ float flex_angle;          // stores the angle from the flex sensor
 // TODO: Tune the motor speed to mimic our original testing case
 #define DEFAULT_SPD 200
 
-// Define the pin used by the flex sensor
-// TODO: Determine which pin this needs to be connnected to
-#define FLEX_PIN 18
-
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward (i.e. if the motor is wired backwards
 // then you can change the offset to flip the logic via software). Value can be 1 or -1
 const int offsetA = 1;
 const int offsetB = 1;
-
-// Tuning parameters for the flex sensor
-// TODO: need to re-measure these values for the acutal implementation
-const float VCC = 5.15;     // Measured voltage of Ardunio 5V line
-const float R_DIV = 10000;  // Measured resistance of 10k resistor
-const float STRAIGHT_RESISTANCE = 80000; // resistance (of the flex sensor) when straight
-const float BEND_RESISTANCE = 300000; // resistance (of the flex sensor) at 90 deg
 
 // Initializing motors.  The library will allow you to initialize as many
 // motors as you have memory for.  If you are using functions like forward
@@ -82,17 +74,14 @@ void setup()
    HM10.begin(9600); // set HM10 serial at 9600 baud rate
    HM10.println("Bluetooth connection established.");
 
-   Serial.begin(9600);
-   Serial.println("Printing angles now");
-
-   // Set up flex sensor pin
-   pinMode(FLEX_PIN, INPUT);
+   limitSwitch.setDebounceTime(50); // set debounce time to 50 milliseconds
 }
 
 void loop()
 {
    get_msg();
    set_current_state();
+   motor_state_machine();
 }
 
 // This function gets a message from the bluetooth module when available
@@ -120,8 +109,8 @@ void set_current_state(){
       HM10.println("WALL TRACKING :<");
       HM10.println("");
       while (1) {
-         flex_angle = flex_angle_measurement();
-         wall_tracking(flex_angle);
+         get_switch_state();
+         wall_tracking();
          motor_state_machine();
          get_msg();
          if (cmd == "0") {
@@ -155,42 +144,33 @@ void motor_state_machine(){
       case LEFT:
          // turns the robot left
          // TODO: figure out why power is decreased for this condition
-         left(motorLeft, motorRight, 2*DEFAULT_SPD);
+         left(motorLeft, motorRight, DEFAULT_SPD);
          break;
          
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
-         right(motorLeft, motorRight, 2*DEFAULT_SPD);
+         right(motorLeft, motorRight, DEFAULT_SPD);
          break;
    }
 }
 
-float flex_angle_measurement(){
-   // This function is used to measure the angle measured with the flex sensor and returns
-   // the angle as a float
-   // Remember to calibrate the flex sensor values above
+// this function returns the state of the switch (pressed or unpressed)
+void get_switch_state(){
+  limitSwitch.loop(); // MUST call the loop() function first
 
-   // Read the ADC, and calculate voltage and resistance from it
-   int flexADC = analogRead(FLEX_PIN);
-   float flexV = flexADC * VCC / 1023.0;
-   float flexR = R_DIV * (VCC / flexV - 1.0);
-   // Serial.println("Resistance: " + String(flexR) + " ohms");
+  if(limitSwitch.isPressed()){
+      switch_state = "PRESSED";
+  }
 
-   // Use the calculated resistance to estimate the sensor's
-   // bend angle:
-   float angle = map(flexR, STRAIGHT_RESISTANCE, BEND_RESISTANCE, 0, 90.0);
-   // Serial.println("Bend: " + String(angle) + " degrees");
-   // Serial.println();
-
-   return angle;
+  if(limitSwitch.isReleased()){
+      switch_state = "UNPRESSED";
+  }
 }
 
 // This function is the logic behind the wall tracking whisker algorithm for the robot
-void wall_tracking(float flex_angle){
-   // HM10.print("Current angle: "); HM10.println(flex_angle);
-   Serial.print("Current angle: "); Serial.println(flex_angle);
-   if (flex_angle < 0){
+void wall_tracking(){
+   if (switch_state == "UNPRESSED"){
       // TODO: Check the units for the flex sensor
       currentState = RIGHT;
    }

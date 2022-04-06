@@ -93,6 +93,7 @@ void loop()
 {
    get_msg();
    set_current_state();
+   motor_state_machine();
 }
 
 // This function gets a message from the bluetooth module when available
