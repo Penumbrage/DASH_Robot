@@ -9,6 +9,12 @@ app are required for this code to work.
 Dependencies:
 TB6612 SparkFun Library
 SoftwareSerial
+
+// NOTE: For this code the following states relate to the following commands
+// 1 = RIGHT ---> FORWARD = RIGHT
+// 2 = LEFT  ---> BACKWARD = LEFT
+// 3 = BACKWARD ---> LEFT = BACKWARD
+// 4 = FORWARD ---> RIGHT = FORWARD
 ******************************************************************************/
 
 // Include the different libraries in the code
@@ -33,7 +39,7 @@ float flex_angle;          // stores the angle from the flex sensor
 
 // Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
-#define DEFAULT_SPD 255
+#define DEFAULT_SPD 200
 
 // Define the pin used by the flex sensor
 // TODO: Determine which pin this needs to be connnected to
@@ -49,8 +55,8 @@ const int offsetB = -1;
 // TODO: need to re-measure these values for the acutal implementation
 const float VCC = 5.0;     // Measured voltage of Ardunio 5V line
 const float R_DIV = 10000;  // Measured resistance of 10k resistor
-const float STRAIGHT_RESISTANCE = 30406; // resistance (of the flex sensor) when straight
-const float BEND_RESISTANCE = 80000; // resistance (of the flex sensor) at 90 deg
+const float STRAIGHT_RESISTANCE = 51000; // resistance (of the flex sensor) when straight
+const float BEND_RESISTANCE = 120000; // resistance (of the flex sensor) at 90 deg
 
 // Initializing motors.  The library will allow you to initialize as many
 // motors as you have memory for.  If you are using functions like forward
@@ -82,10 +88,8 @@ void setup()
 
 void loop()
 {
-   flex_angle = flex_angle_measurement();
-//   get_msg();
-   wall_tracking(flex_angle);
-   motor_state_machine();
+   get_msg();
+   set_current_state();
 }
 
 // This function gets a message from the bluetooth module when available
@@ -97,37 +101,30 @@ void get_msg(){
         // print confirmation message and set current state
         HM10.print("The following command has been received: "); HM10.println(cmd); 
         HM10.print("The current state is: ");
-        set_current_state();
-        HM10.println("");
     }
 }
 
 // This function gets the current state information from the bluetooth module
 void set_current_state(){
+   // TODO: figure out why the state machine doesn't work for the whisker commands / print confirmation messages
    // Obtains a message from the serial line and updates the state case / prints confirmation message to application
    if (cmd == "0"){
       currentState = STOP;
-      HM10.println("STOP");
+      // HM10.println("STOP");
+      // HM10.println("");
    }
    else if (cmd == "1"){
-      currentState = FORWARD;
-      HM10.println("FORWARD");
-   }
-   else if (cmd == "2"){
-      currentState = BACKWARD;
-      HM10.println("BACKWARD");
-   }
-   else if (cmd == "3"){
-      currentState = LEFT;
-      HM10.println("LEFT");
-   }
-   else if (cmd == "4"){
-      currentState = RIGHT;
-      HM10.println("RIGHT");
-   }
-   else if (cmd == "5"){
-      HM10.println("The whisker algorithm has begun.");
-      wall_tracking(flex_angle);
+      HM10.println("WALL TRACKING :<");
+      HM10.println("");
+      while (1) {
+         flex_angle = flex_angle_measurement();
+         wall_tracking(flex_angle);
+         motor_state_machine();
+         get_msg();
+         if (cmd == "0") {
+            break;
+         }
+      }
    }
 }
 
@@ -161,7 +158,7 @@ void motor_state_machine(){
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
-         right(motorLeft, motorRight, 0.9*DEFAULT_SPD);
+         right(motorLeft, motorRight, DEFAULT_SPD);
          break;
    }
 }
@@ -188,12 +185,12 @@ float flex_angle_measurement(){
 
 // This function is the logic behind the wall tracking whisker algorithm for the robot
 void wall_tracking(float flex_angle){
-   HM10.print("Current angle: "); HM10.println(flex_angle);
+   // HM10.print("Current angle: "); HM10.println(flex_angle);
    if (flex_angle < 20){
       // TODO: Check the units for the flex sensor
-      currentState = STOP;
+      currentState = FORWARD;
    }
    else {
-      currentState = STOP;
+      currentState = RIGHT;
    }
 }

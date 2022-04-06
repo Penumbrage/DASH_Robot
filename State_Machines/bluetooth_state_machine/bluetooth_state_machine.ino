@@ -119,7 +119,7 @@ void motor_state_machine(){
          // both motors off and the robot is not moving
          brake(motorLeft, motorRight);
          break;
-
+         
       case FORWARD:
          // moves the robot forward
          forward(motorLeft, motorRight, DEFAULT_SPD);
