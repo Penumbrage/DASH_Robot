@@ -48,15 +48,15 @@ float flex_angle;          // stores the angle from the flex sensor
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward (i.e. if the motor is wired backwards
 // then you can change the offset to flip the logic via software). Value can be 1 or -1
-const int offsetA = -1;
-const int offsetB = -1;
+const int offsetA = 1;
+const int offsetB = 1;
 
 // Tuning parameters for the flex sensor
 // TODO: need to re-measure these values for the acutal implementation
-const float VCC = 5.0;     // Measured voltage of Ardunio 5V line
+const float VCC = 5.15;     // Measured voltage of Ardunio 5V line
 const float R_DIV = 10000;  // Measured resistance of 10k resistor
-const float STRAIGHT_RESISTANCE = 51000; // resistance (of the flex sensor) when straight
-const float BEND_RESISTANCE = 120000; // resistance (of the flex sensor) at 90 deg
+const float STRAIGHT_RESISTANCE = 80000; // resistance (of the flex sensor) when straight
+const float BEND_RESISTANCE = 300000; // resistance (of the flex sensor) at 90 deg
 
 // Initializing motors.  The library will allow you to initialize as many
 // motors as you have memory for.  If you are using functions like forward
@@ -81,6 +81,9 @@ void setup()
 {
    HM10.begin(9600); // set HM10 serial at 9600 baud rate
    HM10.println("Bluetooth connection established.");
+
+   Serial.begin(9600);
+   Serial.println("Printing angles now");
 
    // Set up flex sensor pin
    pinMode(FLEX_PIN, INPUT);
@@ -110,8 +113,8 @@ void set_current_state(){
    // Obtains a message from the serial line and updates the state case / prints confirmation message to application
    if (cmd == "0"){
       currentState = STOP;
-      // HM10.println("STOP");
-      // HM10.println("");
+      //HM10.println("STOP");
+      //HM10.println("");
    }
    else if (cmd == "1"){
       HM10.println("WALL TRACKING :<");
@@ -152,13 +155,13 @@ void motor_state_machine(){
       case LEFT:
          // turns the robot left
          // TODO: figure out why power is decreased for this condition
-         left(motorLeft, motorRight, DEFAULT_SPD);
+         left(motorLeft, motorRight, 2*DEFAULT_SPD);
          break;
          
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
-         right(motorLeft, motorRight, DEFAULT_SPD);
+         right(motorLeft, motorRight, 2*DEFAULT_SPD);
          break;
    }
 }
@@ -186,11 +189,12 @@ float flex_angle_measurement(){
 // This function is the logic behind the wall tracking whisker algorithm for the robot
 void wall_tracking(float flex_angle){
    // HM10.print("Current angle: "); HM10.println(flex_angle);
-   if (flex_angle < 20){
+   Serial.print("Current angle: "); Serial.println(flex_angle);
+   if (flex_angle < 0){
       // TODO: Check the units for the flex sensor
-      currentState = FORWARD;
+      currentState = RIGHT;
    }
    else {
-      currentState = RIGHT;
+      currentState = STOP;
    }
 }
