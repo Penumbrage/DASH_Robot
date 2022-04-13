@@ -76,30 +76,36 @@ void get_current_state(){
    if (Serial.available() > 0){
       // get message from serial line
       msg = Serial.read();
-      cmd = String(msg);
-      Serial.print("The following message has been received: "); Serial.println(cmd);
 
-      // update the state based on the message
-      Serial.print("The current state is: ");
-      if (cmd == "0"){
-         currentState = STOP;
-         Serial.println("STOP");
-      }
-      else if (cmd == "1"){
-         currentState = FORWARD;
-         Serial.println("FORWARD");
-      }
-      else if (cmd == "2"){
-         currentState = BACKWARD;
-         Serial.println("BACKWARD");
-      }
-      else if (cmd == "3"){
-         currentState = LEFT;
-         Serial.println("LEFT");
-      }
-      else if (cmd == "4"){
-         currentState = RIGHT;
-         Serial.println("RIGHT");
+      if (msg != '\n'){
+         cmd = String(msg);
+         Serial.print("The following message has been received: "); Serial.println(cmd);
+
+         // update the state based on the message
+         Serial.print("The current state is: ");
+         if (cmd == "0"){
+            currentState = STOP;
+            Serial.println("STOP");
+         }
+         else if (cmd == "1"){
+            currentState = FORWARD;
+            Serial.println("FORWARD");
+         }
+         else if (cmd == "2"){
+            currentState = BACKWARD;
+            Serial.println("BACKWARD");
+         }
+         else if (cmd == "3"){
+            currentState = LEFT;
+            Serial.println("LEFT");
+         }
+         else if (cmd == "4"){
+            currentState = RIGHT;
+            Serial.println("RIGHT");
+         }
+         else {
+            Serial.println("INVALID MESSAGE");
+         }
       }
    }
 }

@@ -95,32 +95,36 @@ void get_current_state(){
 
          // update the state based on the message
          Serial.print("The current state is: ");
-         if (cmd == "0"){
-            currentState = STOP;
-            Serial.println("STOP");
-         }
-         else if (cmd == "1"){
-            currentState = FORWARD;
-            Serial.println("FORWARD");
-         }
-         else if (cmd == "2"){
-            currentState = BACKWARD;
-            Serial.println("BACKWARD");
-         }
-         else if (cmd == "3"){
-            currentState = LEFT;
-            Serial.println("LEFT");
-         }
-         else if (cmd == "4"){
-            currentState = RIGHT;
-            Serial.println("RIGHT");
-         }
+         set_current_state();
+         Serial.println("");
       }
+   }
+}
 
-      // else if (cmd == "\n"){
-      //    currentState = currentState;
-      //    Serial.println()
-      // }
+void set_current_state() {
+   // Set the current state for the state machine based on the message received
+   if (cmd == "0"){
+      currentState = STOP;
+      Serial.println("STOP");
+   }
+   else if (cmd == "1"){
+      currentState = FORWARD;
+      Serial.println("FORWARD");
+   }
+   else if (cmd == "2"){
+      currentState = BACKWARD;
+      Serial.println("BACKWARD");
+   }
+   else if (cmd == "3"){
+      currentState = LEFT;
+      Serial.println("LEFT");
+   }
+   else if (cmd == "4"){
+      currentState = RIGHT;
+      Serial.println("RIGHT");
+   }
+   else {
+      Serial.println("INVALID INPUT");
    }
 }
 
