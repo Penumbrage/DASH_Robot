@@ -75,12 +75,17 @@ void get_msg(){
     HM10.listen();  // listen the HM10 port
     if (HM10.available() > 0) {   // if HM10 sends something then read
         bt_msg = HM10.read();
-        cmd = String(bt_msg);  // save the data in string format
-        // print confirmation message and set current state
-        HM10.print("The following command has been received: "); HM10.println(cmd); 
-        HM10.print("The current state is: ");
-        set_current_state();
-        HM10.println("");
+
+        // check to make sure we are not reading a new line character
+        if (bt_msg != '\n'){
+            cmd = String(bt_msg);  // save the data in string format
+            // print confirmation message and set current state
+            HM10.print("The following command has been received: "); HM10.println(cmd); 
+            HM10.print("The current state is: ");
+            set_current_state();
+            HM10.println("");
+        }
+
     }
 }
 
@@ -106,6 +111,9 @@ void set_current_state(){
    else if (cmd == "4"){
       currentState = RIGHT;
       HM10.println("RIGHT");
+   }
+   else {
+      HM10.println("INVALID INPUT");
    }
 }
 
