@@ -101,11 +101,15 @@ void get_msg(){
     HM10.listen();  // listen the HM10 port
     if (HM10.available() > 0) {   // if HM10 sends something then read
         bt_msg = HM10.read();
-        cmd = String(bt_msg);  // save the data in string format
-        // print confirmation message and set current state
-        HM10.print("The following command has been received: "); HM10.println(cmd); 
-        HM10.print("The current state is: ");
-    }
+
+        // check we aren't reading the newline character
+        if (bt_msg != '\n'){
+           cmd = String(bt_msg);  // save the data in string format
+           // print confirmation message and set current state
+           HM10.print("The following command has been received: "); HM10.println(cmd); 
+           HM10.print("The current state is: ");
+        }
+   }
 }
 
 // This function gets the current state information from the bluetooth module

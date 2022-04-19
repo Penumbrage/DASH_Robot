@@ -14,13 +14,22 @@ TB6612 SparkFun Library
 #include <SparkFun_TB6612.h>
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
-#define AIN1 2
-#define BIN1 6
-#define AIN2 4
-#define BIN2 7
-#define PWMA 3
-#define PWMB 5
-#define STBY 9
+// NOTE: F stands for the front motor driver; B stands for the back motor driver
+#define AIN1_F A1
+#define BIN1_F A4
+#define AIN2_F A0
+#define BIN2_F A5
+#define PWMA_F 11
+#define PWMB_F 10
+#define STBY_F A3
+
+#define AIN1_B 7
+#define BIN1_B 4
+#define AIN2_B 8
+#define BIN2_B 2
+#define PWMA_B 5
+#define PWMB_B 3
+#define STBY_B 6
 
 // Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
@@ -36,8 +45,10 @@ const int offsetB = 1;
 // motors as you have memory for.  If you are using functions like forward
 // that take 2 motors as arguements you can either write new functions or
 // call the function more than once.
-Motor motorLeft = Motor(AIN1, AIN2, PWMA, offsetA, STBY);
-Motor motorRight = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
+Motor motorLeft_F = Motor(AIN1_F, AIN2_F, PWMA_F, offsetA, STBY_F);
+Motor motorRight_F = Motor(BIN1_F, BIN2_F, PWMB_F, offsetB, STBY_F);
+Motor motorLeft_B = Motor(AIN1_B, AIN2_B, PWMA_B, offsetA, STBY_B);
+Motor motorRight_B = Motor(BIN1_B, BIN2_B, PWMB_B, offsetB, STBY_B);
 
 // Initialize an enumeration to describe the different states for the motors
 typedef enum{
@@ -76,31 +87,44 @@ void get_current_state(){
    if (Serial.available() > 0){
       // get message from serial line
       msg = Serial.read();
-      cmd = String(msg);
-      Serial.print("The following message has been received: "); Serial.println(cmd);
 
-      // update the state based on the message
-      Serial.print("The current state is: ");
-      if (cmd == "0"){
-         currentState = STOP;
-         Serial.println("STOP");
+      // execute command if we aren't receiving a newline character
+      if (msg != '\n'){
+         cmd = String(msg);
+         Serial.print("The following message has been received: "); Serial.println(cmd);
+
+         // update the state based on the message
+         Serial.print("The current state is: ");
+         set_current_state();
+         Serial.println("");
       }
-      else if (cmd == "1"){
-         currentState = FORWARD;
-         Serial.println("FORWARD");
-      }
-      else if (cmd == "2"){
-         currentState = BACKWARD;
-         Serial.println("BACKWARD");
-      }
-      else if (cmd == "3"){
-         currentState = LEFT;
-         Serial.println("LEFT");
-      }
-      else if (cmd == "4"){
-         currentState = RIGHT;
-         Serial.println("RIGHT");
-      }
+   }
+}
+
+void set_current_state() {
+   // Set the current state for the state machine based on the message received
+   if (cmd == "0"){
+      currentState = STOP;
+      Serial.println("STOP");
+   }
+   else if (cmd == "1"){
+      currentState = FORWARD;
+      Serial.println("FORWARD");
+   }
+   else if (cmd == "2"){
+      currentState = BACKWARD;
+      Serial.println("BACKWARD");
+   }
+   else if (cmd == "3"){
+      currentState = LEFT;
+      Serial.println("LEFT");
+   }
+   else if (cmd == "4"){
+      currentState = RIGHT;
+      Serial.println("RIGHT");
+   }
+   else {
+      Serial.println("INVALID INPUT");
    }
 }
 
@@ -112,29 +136,34 @@ void motor_state_machine(){
    {
       case STOP:
          // both motors off and the robot is not moving
-         brake(motorLeft, motorRight);
+         brake(motorLeft_F, motorRight_F);
+         brake(motorLeft_B, motorRight_B);
          break;
 
       case FORWARD:
          // moves the robot forward
-         forward(motorLeft, motorRight, DEFAULT_SPD);
+         forward(motorLeft_F, motorRight_F, DEFAULT_SPD);
+         forward(motorLeft_B, motorRight_B, DEFAULT_SPD);
          break;
 
       case BACKWARD:
          // moves the robot backward
-         back(motorLeft, motorRight, DEFAULT_SPD);
+         back(motorLeft_F, motorRight_F, DEFAULT_SPD);
+         back(motorLeft_B, motorRight_B, DEFAULT_SPD);
          break;
 
       case LEFT:
          // turns the robot left
          // TODO: figure out why power is decreased for this condition
-         left(motorLeft, motorRight, 2*DEFAULT_SPD);
+         left(motorLeft_F, motorRight_F, DEFAULT_SPD);
+         left(motorLeft_B, motorRight_B, DEFAULT_SPD);
          break;
          
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
-         right(motorLeft, motorRight, 2*DEFAULT_SPD);
+         right(motorLeft_F, motorRight_F, DEFAULT_SPD);
+         right(motorLeft_B, motorRight_B, DEFAULT_SPD);
          break;
    }
 }
