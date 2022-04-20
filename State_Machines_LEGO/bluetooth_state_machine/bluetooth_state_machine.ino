@@ -142,8 +142,8 @@ void motor_state_machine(){
 
       case FORWARD:
          // moves the robot forward
-         forward(motorLeft_F, motorRight_F, DEFAULT_SPD);
-         forward(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         forward(motorRight_F, motorLeft_B, DEFAULT_SPD);
+         forward(motorLeft_F, motorRight_B, 0.1*DEFAULT_SPD);
          break;
 
       case BACKWARD:
@@ -156,14 +156,14 @@ void motor_state_machine(){
          // turns the robot left
          // TODO: figure out why power is decreased for this condition
          left(motorLeft_F, motorRight_F, DEFAULT_SPD);
-         left(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         right(motorLeft_B, motorRight_B, DEFAULT_SPD);
          break;
          
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
          right(motorLeft_F, motorRight_F, DEFAULT_SPD);
-         right(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         left(motorLeft_B, motorRight_B, DEFAULT_SPD);
          break;
    }
 }
