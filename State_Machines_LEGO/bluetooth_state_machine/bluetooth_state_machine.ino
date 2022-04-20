@@ -1,17 +1,24 @@
 /******************************************************************************
-File Name: default_state_machine.ino
+File Name: bluetooth_state_machine.ino
 Author: William Wang
 
-Description: This is the state machine code for the LEGo robot utilizing 5
-different states (STOP, FORWARD, BACKWARD, LEFT, and RIGHT).
+Description: This is the bluetooth state machine code for the LEGO robot utilizing 5
+different states (STOP, FORWARD, BACKWARD, LEFT, and RIGHT). A bluetooth module and 
+app are required for this code to work.
 
 Dependencies:
 TB6612 SparkFun Library
+SoftwareSerial
 ******************************************************************************/
 
-// This is the library for the TB6612 that contains the class Motor and all the
-// functions
+// Include the different libraries in the code
+#include <SoftwareSerial.h>
 #include <SparkFun_TB6612.h>
+
+// Create a bluetooth object and variables to store data read from bluetooth
+SoftwareSerial HM10(9, 12); // RX = 9, TX = 12
+char bt_msg;               // stores message from bluetooth module
+String cmd = "";           // command to send to motor driver
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
 // NOTE: F stands for the front motor driver; B stands for the back motor driver
@@ -33,11 +40,11 @@ TB6612 SparkFun Library
 
 // Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
-#define DEFAULT_SPD 180
+#define DEFAULT_SPD 255
 
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward (i.e. if the motor is wired backwards
-// then you can change the offset to flip the logic via software).  Value can be 1 or -1
+// then you can change the offset to flip the logic via software). Value can be 1 or -1
 const int offsetA = 1;
 const int offsetB = 1;
 
@@ -62,69 +69,62 @@ typedef enum{
 // Initialize the state of the motor (STOP)
 motorState currentState = STOP;
 
-// create variables to store the messages
-char msg;
-String cmd = "";
-
 void setup()
 {
-   // start the serial line
-   Serial.begin(9600);
-   // indicate we have connected to the serial line
-   Serial.println("Connected to the serial line.");
+   HM10.begin(9600); // set HM10 serial at 9600 baud rate
+   HM10.println("Bluetooth connection established.");
 }
-
 
 void loop()
 {
-   get_current_state();
+   get_msg();
    motor_state_machine();
 }
 
-void get_current_state(){
-   // TODO: FInd a method to allow for different motor speeds to be inputed from the serial line
-   // Obtains a message from the serial line and updates the state case
-   if (Serial.available() > 0){
-      // get message from serial line
-      msg = Serial.read();
+// This function gets a message from the bluetooth module when available
+void get_msg(){
+    HM10.listen();  // listen the HM10 port
+    if (HM10.available() > 0) {   // if HM10 sends something then read
+        bt_msg = HM10.read();
 
-      // execute command if we aren't receiving a newline character
-      if (msg != '\n'){
-         cmd = String(msg);
-         Serial.print("The following message has been received: "); Serial.println(cmd);
+        // check to make sure we are not reading a new line character
+        if (bt_msg != '\n'){
+            cmd = String(bt_msg);  // save the data in string format
+            // print confirmation message and set current state
+            HM10.print("The following command has been received: "); HM10.println(cmd); 
+            HM10.print("The current state is: ");
+            set_current_state();
+            HM10.println("");
+        }
 
-         // update the state based on the message
-         Serial.print("The current state is: ");
-         set_current_state();
-         Serial.println("");
-      }
-   }
+    }
 }
 
-void set_current_state() {
-   // Set the current state for the state machine based on the message received
+// This function gets the current state information from the bluetooth module
+void set_current_state(){
+   // Obtains a message from the serial line and updates the state case / prints confirmation message to application
    if (cmd == "0"){
       currentState = STOP;
-      Serial.println("STOP");
+      HM10.println("STOP");
    }
    else if (cmd == "1"){
       currentState = FORWARD;
-      Serial.println("FORWARD");
+      HM10.println("FORWARD");
    }
    else if (cmd == "2"){
       currentState = BACKWARD;
-      Serial.println("BACKWARD");
+      HM10.println("BACKWARD");
    }
    else if (cmd == "3"){
       currentState = LEFT;
-      Serial.println("LEFT");
+      HM10.println("LEFT");
    }
    else if (cmd == "4"){
       currentState = RIGHT;
-      Serial.println("RIGHT");
+      HM10.println("RIGHT");
    }
    else {
-      Serial.println("INVALID INPUT");
+      HM10.println("INVALID INPUT");
    }
 }
 
@@ -134,7 +134,7 @@ void motor_state_machine(){
    // with the following states: FORWARD, BACKWARD, LEFT, RIGHT, STOP
    switch(currentState)
    {
-      case STOP:
+       case STOP:
          // both motors off and the robot is not moving
          brake(motorLeft_F, motorRight_F);
          brake(motorLeft_B, motorRight_B);
