@@ -22,21 +22,26 @@ String cmd = "";           // command to send to motor driver
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
 // NOTE: F stands for the front motor driver; B stands for the back motor driver
-#define AIN1_F A1
-#define BIN1_F A4
-#define AIN2_F A0
-#define BIN2_F A5
-#define PWMA_F 11
-#define PWMB_F 10
-#define STBY_F A3
+// NOTE: let's define the frame of reference to be looking from the back of the car
+//       We will define the all the A pins to be associated with the left side motors,
+//       and the right side motors will be defined with the B pins
+// NOTE: Let's also have all the positive wires from the motors go into the 1 pins, and
+//       the negative wires to go into the 2 pins
+#define AIN1_F A0
+#define AIN2_F A1
+#define BIN1_F A2
+#define BIN2_F A3
+#define PWMA_F 10
+#define PWMB_F 11
+#define STBY_F A4
 
-#define AIN1_B 7
-#define BIN1_B 4
-#define AIN2_B 8
-#define BIN2_B 2
-#define PWMA_B 5
-#define PWMB_B 3
-#define STBY_B 6
+#define AIN1_B 2
+#define AIN2_B 4
+#define BIN1_B 6
+#define BIN2_B 7
+#define PWMA_B 3
+#define PWMB_B 5
+#define STBY_B 8
 
 // Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
@@ -52,10 +57,10 @@ const int offsetB = 1;
 // motors as you have memory for.  If you are using functions like forward
 // that take 2 motors as arguements you can either write new functions or
 // call the function more than once.
-Motor motorLeft_F = Motor(AIN1_F, AIN2_F, PWMA_F, offsetA, STBY_F);
-Motor motorRight_F = Motor(BIN1_F, BIN2_F, PWMB_F, offsetB, STBY_F);
-Motor motorLeft_B = Motor(AIN1_B, AIN2_B, PWMA_B, offsetA, STBY_B);
-Motor motorRight_B = Motor(BIN1_B, BIN2_B, PWMB_B, offsetB, STBY_B);
+Motor motorLeft_F = Motor(AIN1_F, AIN2_F, PWMA_F, -1, STBY_F);
+Motor motorRight_F = Motor(BIN1_F, BIN2_F, PWMB_F, 1, STBY_F);
+Motor motorLeft_B = Motor(AIN1_B, AIN2_B, PWMA_B, -1, STBY_B);
+Motor motorRight_B = Motor(BIN1_B, BIN2_B, PWMB_B, 1, STBY_B);
 
 // Initialize an enumeration to describe the different states for the motors
 typedef enum{
@@ -142,8 +147,8 @@ void motor_state_machine(){
 
       case FORWARD:
          // moves the robot forward
-         forward(motorRight_F, motorLeft_B, DEFAULT_SPD);
-         forward(motorLeft_F, motorRight_B, 0.1*DEFAULT_SPD);
+         forward(motorLeft_F, motorRight_F, DEFAULT_SPD);
+         forward(motorLeft_B, motorRight_B, DEFAULT_SPD);
          break;
 
       case BACKWARD:
@@ -156,14 +161,14 @@ void motor_state_machine(){
          // turns the robot left
          // TODO: figure out why power is decreased for this condition
          left(motorLeft_F, motorRight_F, DEFAULT_SPD);
-         right(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         left(motorRight_B, motorLeft_B, DEFAULT_SPD);
          break;
          
       case RIGHT:
          // turns the robot right
          // TODO: figure out why power is decreased for ths condition
          right(motorLeft_F, motorRight_F, DEFAULT_SPD);
-         left(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         right(motorRight_B, motorLeft_B, DEFAULT_SPD);
          break;
    }
 }
