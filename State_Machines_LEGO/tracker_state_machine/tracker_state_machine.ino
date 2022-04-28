@@ -1,9 +1,10 @@
 /******************************************************************************
-File Name: bluetooth_state_machine.ino
+File Name: tracker_state_machine.ino
 Author: William Wang
 
-Description: This is the bluetooth state machine code for the LEGO robot utilizing 5
-different states (STOP, FORWARD, BACKWARD, LEFT, and RIGHT). A bluetooth module and 
+Description: This is the tracker state machine code for the LEGO robot utilizing 5
+different basic states (STOP, FORWARD, BACKWARD, LEFT, and RIGHT) and some custom
+functions that allow the robot to follow a pheromone trail. A bluetooth module and 
 app are required for this code to work.
 
 Dependencies:
@@ -171,4 +172,15 @@ void motor_state_machine(){
          right(motorRight_B, motorLeft_B, 0.8*DEFAULT_SPD);
          break;
    }
+}
+
+
+// This function takes in the servo angle measured by the servo (used as the desired turn angle) and changes it into the a turn time
+float turn_timer_function(float servo_angle){
+   float time_turn;
+
+   // (102.857 degrees per second)
+   time_turn = servo_angle/102.857142857;
+
+   return time_turn;
 }
