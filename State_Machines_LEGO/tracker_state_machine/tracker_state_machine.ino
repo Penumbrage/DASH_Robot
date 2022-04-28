@@ -184,3 +184,10 @@ float turn_timer_function(float servo_angle){
 
    return time_turn;
 }
+
+
+// This function is used to turn the robot a specified amount given the servo angle
+void robot_turn(float servo_angle){
+
+   float time_turn = turn_timer_function(servo_angle);
+}
