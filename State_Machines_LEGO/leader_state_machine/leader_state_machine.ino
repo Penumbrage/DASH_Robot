@@ -51,11 +51,11 @@ int trailStep = 1;
 
 // Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
-#define DEFAULT_SPD 255
+#define DEFAULT_SPD 125
 
 // Define the run times for the trail laying algorithm
-#define STRAIGHT_TIME 2000       // time the robot will go straight before stopping
-#define CURVED_TIME 2000         // the time the robot will turn before continuing to go straight
+#define STRAIGHT_TIME 1000       // time the robot will go straight before stopping
+#define CURVED_TIME 500         // the time the robot will turn before continuing to go straight
 
 // Define the pump time used when releasing the VOC
 #define PUMP_TIME 500
@@ -233,7 +233,9 @@ void motor_state_machine(){
       if(trailStep <= CURVED_STEPS) {
          currentState = T_C_FOR;
       } else {
+         trailStep = 1;       // reset the trail step for the next trial
          currentState = STOP;
+         HM10.println("Trail algorithm completed.");
       }
         break;
 
