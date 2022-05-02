@@ -1,10 +1,9 @@
 /******************************************************************************
-File Name: bluetooth_state_machine.ino
-Author: William Wang
+File Name: leader_state_machine.ino
+Author: William Wang, Max Anderson
 
-Description: This is the bluetooth state machine code for the LEGO robot utilizing 5
-different states (STOP, FORWARD, BACKWARD, LEFT, and RIGHT). A bluetooth module and 
-app are required for this code to work.
+Description: This file contains the state machine that controls the leader
+robot logic that leaves a trail for the tracker robot.
 
 Dependencies:
 TB6612 SparkFun Library
@@ -44,10 +43,22 @@ String cmd = "";           // command to send to motor driver
 #define STBY_B 8
 
 #define PUMP A5 //Pump is connected to A5
+#define STRAIGHT_STEPS 5      // number of steps that the robot will go straight
+#define CURVED_STEPS 5        // number of curved steps the robot will take
+
+// Initialize the trailStep number -> Important for Autonomous trail creation.
+int trailStep = 1;
 
 // Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
-#define DEFAULT_SPD 225
+#define DEFAULT_SPD 255
+
+// Define the run times for the trail laying algorithm
+#define STRAIGHT_TIME 2000       // time the robot will go straight before stopping
+#define CURVED_TIME 2000         // the time the robot will turn before continuing to go straight
+
+// Define the pump time used when releasing the VOC
+#define PUMP_TIME 500
 
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward (i.e. if the motor is wired backwards
@@ -80,9 +91,6 @@ typedef enum{
    FILL
 } motorState;
 
-// Initialize the trailStep number -> Important for Autonomous trail creation.
-int trailStep = 0;
-
 // Initialize the state of the motor (STOP)
 motorState currentState = STOP;
 
@@ -99,9 +107,10 @@ void loop()
    get_msg();
    motor_state_machine();
 
+   // Test the condition of the pump
    if(currentState == FORWARD) {
     
-    run_pump();
+      run_pump();
     
    }
 }
@@ -149,11 +158,11 @@ void set_current_state(){
       HM10.println("RIGHT");
    }
    else if (cmd == "5"){
-      currentState = TRAIL;
+      currentState = TRAIL;         // the state used to perform the autonomous trail generation
       HM10.println("TRAIL");
    }
    else if (cmd == "6"){
-      currentState = FILL;
+      currentState = FILL;          // used to fill the VOC reservoir (water bottle), remember to reverse the polarity on the pump
       HM10.println("FILL");
    }
    else {
@@ -202,87 +211,94 @@ void motor_state_machine(){
          break;
 
       case TRAIL:
-        // Begins the Autonomous Trail Creation
+         // Begins the Autonomous Trail Creation
 
-        currentState = T_STR;
-        break;
+         currentState = T_STR;
+         break;
 
       case T_STR:
-
-        if(trailStep <= 5) {
-          currentState = T_S_FOR;
-        } else {
-          currentState = T_CUR;
-        }
-
-        break;
+         // allows the robot to travel straight for STRAIGHT_STEPS number of times
+         
+         if(trailStep <= STRAIGHT_STEPS) {
+            currentState = T_S_FOR;
+         } else {
+            trailStep = 1;                // reset the step counter for curved section
+            currentState = T_CUR;         // transitions the robot to turning steps
+         }
+         break;
 
       case T_CUR:
+      // causes the robot to perform the curved section of the trail laying for CURVED_STEPS number of steps
 
-      if(trailStep <= 10) {
-          currentState = T_C_FOR;
-        } else {
-          currentState = STOP;
-        }
-
-
+      if(trailStep <= CURVED_STEPS) {
+         currentState = T_C_FOR;
+      } else {
+         currentState = STOP;
+      }
         break;
 
       case T_S_FOR:
 
-        // moves the robot forward
-        forward(motorLeft_F, motorRight_F, DEFAULT_SPD);
-        forward(motorLeft_B, motorRight_B, DEFAULT_SPD);
-        
-        delay(2000);
-        brake(motorLeft_F, motorRight_F);
-        brake(motorLeft_B, motorRight_B);
+         // moves the robot forward
+         forward(motorLeft_F, motorRight_F, DEFAULT_SPD);
+         forward(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         delay(STRAIGHT_TIME);
+         
+         // stop the robot
+         brake(motorLeft_F, motorRight_F);
+         brake(motorLeft_B, motorRight_B);
+         delay(500);
 
-        delay(500);
-        run_pump();
-        //Enumerates trailStep
-        trailStep = trailStep + 1;
+         // release a set amount of VOC (amount specified in run_pump() function)
+         run_pump();
 
-        //Changes motorState back to T_STR
-        currentState = T_STR;
+         //Enumerates trailStep
+         trailStep = trailStep + 1;
 
-        break;
+         //Changes motorState back to T_STR
+         currentState = T_STR;
+
+         break;
 
       case T_C_FOR:
 
-        // moves the robot forward
-        forward(motorLeft_F, motorRight_F, DEFAULT_SPD);
-        forward(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         // moves the robot forward
+         forward(motorLeft_F, motorRight_F, DEFAULT_SPD);
+         forward(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         delay(STRAIGHT_TIME);
 
-        delay(2000);
-        brake(motorLeft_F, motorRight_F);
-        brake(motorLeft_B, motorRight_B);
+         // stop the robot
+         brake(motorLeft_F, motorRight_F);
+         brake(motorLeft_B, motorRight_B);
+         delay(500);
 
-        delay(500);
-        run_pump();
+         // release a set amount of VOC (amount specified in run_pump() function) 
+         run_pump();
 
-        //Changes motorState to T_LEF
-        currentState = T_LEF;
+         //Changes motorState to T_LEF (performs the turning)
+         currentState = T_LEF;
 
-        break;
+         break;
 
       case T_LEF:
 
-        //Turns robot left small amount
-        left(motorLeft_F, motorRight_F, DEFAULT_SPD);
-        left(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         //Turns robot left small amount
+         left(motorLeft_F, motorRight_F, DEFAULT_SPD);
+         left(motorLeft_B, motorRight_B, DEFAULT_SPD);
+         delay(CURVED_TIME);
 
-        delay(2000);
-        brake(motorLeft_F, motorRight_F);
-        brake(motorLeft_B, motorRight_B);
-      
-        //Enumerates trailStep
-        trailStep = trailStep + 1;
+         // stop the robot
+         brake(motorLeft_F, motorRight_F);
+         brake(motorLeft_B, motorRight_B);
+         delay(500);
+         
+         //Enumerates trailStep
+         trailStep = trailStep + 1;
 
-        //Changes motorState to T_CUR
-        currentState = T_CUR;
+         //Changes motorState to T_CUR (reevaluate the curved state)
+         currentState = T_CUR;
 
-        break;
+         break;
 
       case FILL:
       
@@ -296,11 +312,12 @@ void motor_state_machine(){
    }
 }
 
+// This function is used to release a set amount of VOC from the robot
 void run_pump(){
 
-  digitalWrite(PUMP,HIGH); //turns the pump on
-  delay(500);
-  digitalWrite(PUMP,LOW);
-  delay(1000);
+   digitalWrite(PUMP,HIGH); //turns the pump on
+   delay(PUMP_TIME);
+   digitalWrite(PUMP,LOW);
+   delay(1000);
   
 }
