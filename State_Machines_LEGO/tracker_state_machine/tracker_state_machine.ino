@@ -1,6 +1,6 @@
 /******************************************************************************
 File Name: tracker_state_machine.ino
-Author: William Wang
+Author: William Wang, Elena Stirk
 
 Description: This is the tracker state machine code for the LEGO robot utilizing 5
 different basic states (STOP, FORWARD, BACKWARD, LEFT, and RIGHT) and some custom
@@ -10,16 +10,32 @@ app are required for this code to work.
 Dependencies:
 TB6612 SparkFun Library
 SoftwareSerial
+Servo Library
+Adafruit CCS811 Library
 ******************************************************************************/
 
 // Include the different libraries in the code
 #include <SoftwareSerial.h>
 #include <SparkFun_TB6612.h>
+#include <Servo.h>
+#include "Adafruit_CCS811.h"
 
 // Create a bluetooth object and variables to store data read from bluetooth
 SoftwareSerial HM10(9, 12); // RX = 9, TX = 12
 char bt_msg;               // stores message from bluetooth module
 String cmd = "";           // command to send to motor driver
+
+// Create smell sensor object
+Adafruit_CCS811 ccs;
+
+// create servo object to control a servo (twelve servo objects can be createed on most boards)
+Servo myservo;   
+
+// Define the servo sweep wait time between readings
+#define SERVO_WAIT_TIME 2000
+
+// Develop a lookup table with the turn angles for the robot
+float turn_angle[10] = {-60, -30, 0, 30, 60, 60, 30, 0, -30, -60};
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
 // NOTE: F stands for the front motor driver; B stands for the back motor driver
@@ -79,6 +95,16 @@ void setup()
 {
    HM10.begin(9600); // set HM10 serial at 9600 baud rate
    HM10.println("Bluetooth connection established.");
+   
+   myservo.attach(6);  // attaches the servo on pin 6 to the servo object
+
+   if(!ccs.begin()){
+      HM10.println("Failed to start sensor! Please check your wiring.");
+      while(1);
+   }
+
+   // Wait for the sensor to be ready
+   while(!ccs.available());
 }
 
 void loop()
@@ -174,6 +200,58 @@ void motor_state_machine(){
    }
 }
 
+// This function is used to perform the sensor sweep using the servo/VOC sensor unit
+float get_turn_angle(){
+   // develop an array of sensor readings
+   // Create variables to store the values obtained from the smell sensor sweep
+   float SensorArray[10];        // array to store values from VOC sweep
+   int arrayIndex = 0;           // index for the sensor array
+   float maxVOCReading;          // initialize variable to store max VOC reading
+   float servo_pos;              // initialize variable to store the servo position
+   int maxVOCIndex;              // initialize variable to store the index of the max VOC reading
+   float req_turn_angle;         // initialize variable to return required turn angle
+
+   // readings in the following form 0:30:120
+   for(servo_pos = 0; servo_pos <= 120; servo_pos += 30){
+      myservo.write(servo_pos); 
+      delay(SERVO_WAIT_TIME);
+
+      // read the VOC sensor after SERVO_WAIT_TIME and store reading in the array
+      if (ccs.available()) {
+         if(!ccs.readData()){
+            SensorArray[arrayIndex] = ccs.getTVOC();
+            arrayIndex++;
+         }
+      }
+   }
+
+   // readings in the following form 120:-30:0
+   for(servo_pos = 120; servo_pos >= 0; servo_pos -= 30){
+      myservo.write(servo_pos); 
+      delay(SERVO_WAIT_TIME);
+
+      // read the VOC sensor after SERVO_WAIT_TIME and store the reading in the array
+      if (ccs.available()) {
+         if(!ccs.readData()){
+            SensorArray[arrayIndex] = ccs.getTVOC();
+            arrayIndex++;
+         }
+      }
+   }
+
+   // determine the array index where the maximum VOC value is stored
+   maxVOCReading = SensorArray[0];        // initialize the maxVOC reading variable to be the first element
+   for (int i = 0; i < (sizeof(SensorArray) / sizeof(SensorArray[0])); i++) {
+      if (maxVOCReading >= SensorArray[i]) {
+         maxVOCIndex = i;
+      }
+   }
+
+   // obtain the required turn angle and return its value
+   req_turn_angle = turn_angle[maxVOCIndex];
+
+   return req_turn_angle;
+}
 
 // This function takes in the servo angle measured by the servo (used as the desired turn angle) and changes it into the a turn time
 float turn_timer_function(float servo_angle){
@@ -188,6 +266,7 @@ float turn_timer_function(float servo_angle){
 
 // This function is used to turn the robot a specified amount given the servo angle
 void robot_turn(float servo_angle){
+
 
    float time_turn = turn_timer_function(servo_angle);
 }
