@@ -37,6 +37,11 @@ Servo myservo;
 // Develop a lookup table with the turn angles for the robot
 float turn_angle[10] = {-60, -30, 0, 30, 60, 60, 30, 0, -30, -60};
 
+// Define different timing intervals for the tracking algorithm
+#define STRAIGHT_TIME 1000          // amount of time the robot should go straight
+#define WAIT_TIME 1000              // the amount of time the robot should wait between steps
+
+
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
 // NOTE: F stands for the front motor driver; B stands for the back motor driver
 // NOTE: let's define the frame of reference to be looking from the back of the car
@@ -85,7 +90,8 @@ typedef enum{
    BACKWARD,
    LEFT,
    RIGHT,
-   STOP
+   STOP,
+   TRACKING
 } motorState;
 
 // Initialize the state of the motor (STOP)
@@ -98,13 +104,13 @@ void setup()
    
    myservo.attach(6);  // attaches the servo on pin 6 to the servo object
 
-   if(!ccs.begin()){
-      HM10.println("Failed to start sensor! Please check your wiring.");
-      while(1);
-   }
+   // if(!ccs.begin()){
+   //    HM10.println("Failed to start sensor! Please check your wiring.");
+   //    while(1);
+   // }
 
-   // Wait for the sensor to be ready
-   while(!ccs.available());
+   // // Wait for the sensor to be ready
+   // while(!ccs.available());
 }
 
 void loop()
@@ -155,6 +161,10 @@ void set_current_state(){
       currentState = RIGHT;
       HM10.println("RIGHT");
    }
+   else if (cmd == "5"){
+      currentState = TRACKING;
+      HM10.println("TRACKING");
+   }
    else {
       HM10.println("INVALID INPUT");
    }
@@ -196,6 +206,11 @@ void motor_state_machine(){
          // TODO: figure out why power is decreased for ths condition
          right(motorLeft_F, motorRight_F, 0.8*DEFAULT_SPD);
          right(motorRight_B, motorLeft_B, 0.8*DEFAULT_SPD);
+         break;
+
+      case TRACKING:
+         // performs tracking of the VOC trails
+         robot_track();
          break;
    }
 }
@@ -266,7 +281,54 @@ float turn_timer_function(float servo_angle){
 
 // This function is used to turn the robot a specified amount given the servo angle
 void robot_turn(float servo_angle){
+   float time_turn = turn_timer_function(servo_angle);         // calculate the amount of time needed for the robot to turn
+   
+   // determine the turn direction and execute turn
+   if (time_turn < 0){           // turn left if the time is negative
+      time_turn = -1*time_turn;
+      currentState = LEFT;
+      motor_state_machine();
+      delay(time_turn);          // have the robot only turn right for the specified amount of time
+      currentState = STOP;
+      motor_state_machine();
+   }
+   else if (time_turn > 0) {     // turn the robot right if time is positive
+      currentState = RIGHT;
+      motor_state_machine();
+      delay(time_turn);
+      currentState = STOP;
+      motor_state_machine();
+   }
+   // NOTE: if the time is zero, this means the robot should maintain a straight path
+}
 
 
-   float time_turn = turn_timer_function(servo_angle);
+// This function is used to tell the robot to go straight for a set amount of time
+void robot_straight() {
+   currentState = FORWARD;
+   motor_state_machine();
+   delay(STRAIGHT_TIME);
+   currentState = STOP;
+   motor_state_machine();
+}
+
+
+// This function is used to perform the overall tracking algorithm for the robot
+void robot_track() {
+   float req_turn_angle;   // initialize variable to store the required turn angle
+
+   delay(WAIT_TIME);       // have the robot wait for a little at the beginning of the algorithm
+
+   // perform sensor sweep to find VOC direction
+   // req_turn_angle = get_turn_angle();
+   req_turn_angle = 30;
+
+   // use the required turn angle to turn the robot in the correct orientation
+   robot_turn(req_turn_angle);
+
+   // go straight for STRAIGHT_TIME amount of time
+   robot_straight();
+
+   // reset the state to ensure the state machine continues to run the TRACKING state
+   currentState = TRACKING;
 }
