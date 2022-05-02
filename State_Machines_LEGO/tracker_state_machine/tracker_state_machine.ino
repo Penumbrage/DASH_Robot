@@ -67,7 +67,7 @@ float turn_angle[10] = {-60, -30, 0, 30, 60, 60, 30, 0, -30, -60};
 
 // Define the default speed of the motors by using the PWM to get to 3.7 V
 // TODO: Tune the motor speed to mimic our original testing case
-#define DEFAULT_SPD 255
+#define DEFAULT_SPD 100
 
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward (i.e. if the motor is wired backwards
@@ -282,20 +282,22 @@ float turn_timer_function(float servo_angle){
 // This function is used to turn the robot a specified amount given the servo angle
 void robot_turn(float servo_angle){
    float time_turn = turn_timer_function(servo_angle);         // calculate the amount of time needed for the robot to turn
+   HM10.println(servo_angle);
+   HM10.println(time_turn);
    
    // determine the turn direction and execute turn
    if (time_turn < 0){           // turn left if the time is negative
       time_turn = -1*time_turn;
       currentState = LEFT;
       motor_state_machine();
-      delay(time_turn);          // have the robot only turn right for the specified amount of time
+      delay(1000*time_turn);          // have the robot only turn right for the specified amount of time
       currentState = STOP;
       motor_state_machine();
    }
    else if (time_turn > 0) {     // turn the robot right if time is positive
       currentState = RIGHT;
       motor_state_machine();
-      delay(time_turn);
+      delay(1000*time_turn);
       currentState = STOP;
       motor_state_machine();
    }
@@ -317,17 +319,21 @@ void robot_straight() {
 void robot_track() {
    float req_turn_angle;   // initialize variable to store the required turn angle
 
-   delay(WAIT_TIME);       // have the robot wait for a little at the beginning of the algorithm
+   delay(WAIT_TIME);          // begin cycle with a wait time
 
    // perform sensor sweep to find VOC direction
    // req_turn_angle = get_turn_angle();
-   req_turn_angle = 30;
+   req_turn_angle = -60;
+   delay(WAIT_TIME);
 
    // use the required turn angle to turn the robot in the correct orientation
    robot_turn(req_turn_angle);
+   HM10.println("Turn completed");
+   delay(WAIT_TIME);
 
    // go straight for STRAIGHT_TIME amount of time
    robot_straight();
+   HM10.println("Straight completed");
 
    // reset the state to ensure the state machine continues to run the TRACKING state
    currentState = TRACKING;
