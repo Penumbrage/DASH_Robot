@@ -44,7 +44,7 @@ String cmd = "";           // command to send to motor driver
 
 #define PUMP A5 //Pump is connected to A5
 #define STRAIGHT_STEPS 5      // number of steps that the robot will go straight
-#define CURVED_STEPS 5        // number of curved steps the robot will take
+#define CURVED_STEPS 10        // number of curved steps the robot will take
 
 // Initialize the trailStep number -> Important for Autonomous trail creation.
 int trailStep = 1;
@@ -54,11 +54,11 @@ int trailStep = 1;
 #define DEFAULT_SPD 125
 
 // Define the run times for the trail laying algorithm
-#define STRAIGHT_TIME 1000       // time the robot will go straight before stopping
-#define CURVED_TIME 500         // the time the robot will turn before continuing to go straight
+#define STRAIGHT_TIME 500       // time the robot will go straight before stopping
+#define CURVED_TIME 250         // the time the robot will turn before continuing to go straight
 
 // Define the pump time used when releasing the VOC
-#define PUMP_TIME 500
+#define PUMP_TIME 200
 
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward (i.e. if the motor is wired backwards
